@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.DisplayMetrics
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -28,11 +29,18 @@ class AnimationView @JvmOverloads constructor(
     private var yPosCircle: Float = 0f
     private var directionCircle: String = ""
 
-    private val BLOCKSIZE = 50F
+    private val SPEED = 50F //velocidad de movimiento del circulo
+    private val BLOCKSIZE = 100F
+
+    private lateinit var metrics: DisplayMetrics
+    private var SCREEN_WIDTH: Int = 0
+
+    private lateinit var squareArray:List<Array<Float>>
 
     init {
         holder.addCallback(this)
-
+        metrics = resources.displayMetrics
+        SCREEN_WIDTH = metrics.widthPixels
     }
 
     /***3 METODOS PARA EL CICLO DE VIDA DE SURFACEHOLDER**/
@@ -103,20 +111,67 @@ class AnimationView @JvmOverloads constructor(
 
     private fun moveCircle(){
         when(directionCircle){
-            "Rigth" -> xPosCircle += BLOCKSIZE / 10
-            "Left" -> xPosCircle += -BLOCKSIZE / 10
-            "Bottom" -> yPosCircle += BLOCKSIZE / 10
-            "Up" -> yPosCircle += -BLOCKSIZE / 10
+            "Rigth" -> xPosCircle += SPEED / 10
+            "Left" -> xPosCircle += -SPEED / 10
+            "Bottom" -> yPosCircle += SPEED / 10
+            "Up" -> yPosCircle -= SPEED / 10
+            "Collision" -> xPosCircle *= 1
         }
-        //si traspaso izq, aparezco en derecha
-        if(xPosCircle < 0)
-            xPosCircle = BLOCKSIZE*20
-        //si traspaso der, aparezco en izq
-        if(xPosCircle >= BLOCKSIZE*22)
-            xPosCircle = 0F
+
+        collisionLeftAndRigth()
+        collisionUpAndBottom()
+        collisionWithObjects()
 
         drawCircle()
     }
+
+    private fun collisionLeftAndRigth(){
+        val SCREENW: Int = myCanvas?.width!! //largo de pantalla
+        //si traspaso izq, aparezco en derecha
+        if(xPosCircle < 0)
+            xPosCircle = SCREENW.toFloat() - 1
+        //si traspaso der, aparezco en izq
+        if(xPosCircle >= SCREENW)
+            xPosCircle = 0F
+    }
+
+    private fun collisionUpAndBottom(){
+        val screenH: Int = myCanvas?.height!! //largo de pantalla
+        if (yPosCircle < 0)
+            yPosCircle = screenH.toFloat() - 1
+        if(yPosCircle >= screenH)
+            yPosCircle = 0F
+    }
+
+    private fun collisionWithObjects(){
+
+        val index = (yPosCircle / 100).toInt()
+        val posX = (xPosCircle / 100).toInt()
+
+        if(index <= 3){
+            if(index != 2) {
+                if (existPosition(index, posX)) {
+                    directionCircle = "Collision"
+                }
+            }
+        }
+    }
+
+    private fun existPosition(index:Int,pos: Int): Boolean {
+        var isPositionValid = false
+        var i = 0
+        val array = squareArray[index]
+
+        while ((i<array.size) && (!isPositionValid)){
+            if(pos.toFloat() == array[i]){
+                isPositionValid = true
+            }
+            i += 1
+        }
+
+        return isPositionValid
+    }
+
 
     private fun drawCircle(){
         myPaint.color = Color.RED
@@ -124,24 +179,36 @@ class AnimationView @JvmOverloads constructor(
     }
 
     private fun drawSquare(){
-        val screenW: Int = myCanvas?.width!! //ancho de pantalla
-        val screenH: Int = myCanvas?.height!! //largo de pantalla
 
-        myPaint.color = Color.WHITE
-        val left = 300F
-        val rigth = 400F
-        val top = 300F
-        val bottom = 400F
+        squareCoordinates()
 
-        myCanvas?.drawRect(left,top,rigth,bottom,myPaint)
-        myCanvas?.drawRect(left,top+200,rigth,bottom+200,myPaint)
-        myCanvas?.drawRect(left,top+400,rigth,bottom+400,myPaint)
-        myCanvas?.drawRect(left,top+600,rigth,bottom+600,myPaint)
+        myPaint.color = Color.BLUE
+        var left:Float
+        var rigth:Float
+        var top:Float
+        var bottom:Float
 
-        myCanvas?.drawRect(left+400,top,rigth+400,bottom,myPaint)
-        myCanvas?.drawRect(left+400,top+200,rigth+400,bottom+200,myPaint)
-        myCanvas?.drawRect(left+400,top+400,rigth+400,bottom+400,myPaint)
-        myCanvas?.drawRect(left+400,top+600,rigth+400,bottom+600,myPaint)
+        for (i in 0..3){
+            if(i != 2) {
+                top = i.toFloat()
+                bottom = top + 1
+                val internalArray = squareArray[i]
+                for (j in internalArray.indices) {
+                    rigth = internalArray[j]
+                    left = rigth + 1
+                    myCanvas?.drawRect(left*BLOCKSIZE, top*BLOCKSIZE, rigth*BLOCKSIZE, bottom*BLOCKSIZE, myPaint)
+                }
+            }
+        }
+    }
+
+    private fun squareCoordinates(){
+        squareArray = listOf(
+            arrayOf(5f),
+            arrayOf(1f,3f,5f,7f,9f),
+            arrayOf(0f),
+            arrayOf(1f,2f,3f,5f,7f,8f,9f)
+        )
     }
 
 }
