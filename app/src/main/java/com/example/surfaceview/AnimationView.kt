@@ -25,8 +25,8 @@ class AnimationView @JvmOverloads constructor(
     private var posX2: Float = 10f
     private var posY2: Float = 10f
 
-    private var xPosCircle: Float = 0f
-    private var yPosCircle: Float = 0f
+    private var xPosCircle: Float = 50f
+    private var yPosCircle: Float = 50f
     private var directionCircle: String = ""
 
     private val SPEED = 50F //velocidad de movimiento del circulo
@@ -34,6 +34,8 @@ class AnimationView @JvmOverloads constructor(
 
     private lateinit var metrics: DisplayMetrics
     private var SCREEN_WIDTH: Int = 0
+    private var SCREEN_HEIGTH: Int = 0
+    private var SCREEN_H: Int = 1750
 
     private lateinit var squareArray:List<Array<Float>>
 
@@ -41,6 +43,7 @@ class AnimationView @JvmOverloads constructor(
         holder.addCallback(this)
         metrics = resources.displayMetrics
         SCREEN_WIDTH = metrics.widthPixels
+        SCREEN_HEIGTH = metrics.heightPixels
     }
 
     /***3 METODOS PARA EL CICLO DE VIDA DE SURFACEHOLDER**/
@@ -51,7 +54,7 @@ class AnimationView @JvmOverloads constructor(
             while (canDraw){
                 myCanvas = holder.lockCanvas()
                 if(myCanvas != null){
-                    myCanvas?.drawColor(Color.BLACK)
+                    myCanvas?.drawColor(Color.BLACK) //background color
 
                     drawSquare()
                     moveCircle()
@@ -134,13 +137,13 @@ class AnimationView @JvmOverloads constructor(
         if(xPosCircle >= SCREENW)
             xPosCircle = 0F
     }
-
+    //TODO: revisar el alto...
     private fun collisionUpAndBottom(){
         val screenH: Int = myCanvas?.height!! //largo de pantalla
-        if (yPosCircle < 0)
-            yPosCircle = screenH.toFloat() - 1
-        if(yPosCircle >= screenH)
-            yPosCircle = 0F
+        if (yPosCircle <= 0)
+            directionCircle = "Collision"//yPosCircle = screenH.toFloat() - 1
+        if(yPosCircle >= SCREEN_H)
+            directionCircle = "Collision"//yPosCircle = 0F
     }
 
     private fun collisionWithObjects(){
@@ -172,14 +175,14 @@ class AnimationView @JvmOverloads constructor(
         return isPositionValid
     }
 
-
+    /**Se dibuja el circulo (posición inicial, color y radio)**/
     private fun drawCircle(){
         myPaint.color = Color.RED
         myCanvas?.drawCircle(xPosCircle,yPosCircle,20F,myPaint)
     }
 
+    /**Se dibujan todos los cuadrados que estaran en el tablero**/
     private fun drawSquare(){
-
         squareCoordinates()
 
         myPaint.color = Color.BLUE
@@ -202,6 +205,7 @@ class AnimationView @JvmOverloads constructor(
         }
     }
 
+    /**Arreglo donde se guandan la direccion Izquierda de los cuadrados**/
     private fun squareCoordinates(){
         squareArray = listOf(
             arrayOf(5f),
